@@ -1,0 +1,133 @@
+.eventCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.eventCard:hover {
+  border-color: var(--color-accent-blue);
+  transform: translateY(-2px);
+}
+
+.eventImage {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.eventCover {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+}
+
+.geometricPattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 20%, #10B981 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, #3B82F6 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, #F59E0B 0%, transparent 50%);
+  mix-blend-mode: overlay;
+}
+
+.eventContent {
+  padding: var(--spacing-lg);
+}
+
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.eventTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.eventVisibility {
+  margin-left: var(--spacing-sm);
+}
+
+.badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.badge.public {
+  background-color: var(--color-accent-green);
+  color: white;
+}
+
+.badge.private {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+.eventDetails {
+  margin-bottom: var(--spacing-md);
+}
+
+.eventTime, .eventLocation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.eventDescription {
+  margin-bottom: var(--spacing-md);
+}
+
+.eventDescription p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.eventMeta {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.eventOptions {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background-color: var(--color-background);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+}

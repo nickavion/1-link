@@ -1,0 +1,209 @@
+.createEventPage {
+  padding: var(--spacing-lg) 0;
+}
+
+.header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.form {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+}
+
+.formLayout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--spacing-xl);
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.eventCover {
+  width: 100%;
+  height: 300px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--border-radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.eventCover.minimal {
+  background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+}
+
+.eventCover.colorful {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.eventCover.dark {
+  background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+}
+
+.geometricPattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 20%, #10B981 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, #3B82F6 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, #F59E0B 0%, transparent 50%),
+    radial-gradient(circle at 60% 20%, #EF4444 0%, transparent 50%);
+  mix-blend-mode: overlay;
+}
+
+.eventNameOverlay {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  left: var(--spacing-lg);
+  right: var(--spacing-lg);
+  z-index: 3;
+}
+
+.eventNameOverlay h2 {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.themeSection {
+  background-color: var(--color-background);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.eventHeader {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.visibilityToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-primary);
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.optionControl {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.titleInput {
+  font-size: 32px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+}
+
+.titleInput::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.dateTimeSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  background-color: var(--color-background);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+}
+
+.dateTimeRow {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.dateLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.eventOptions {
+  background-color: var(--color-background);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+}
+
+.eventOptions h3 {
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+  font-size: 18px;
+}
+
+.optionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-text-primary);
+}
+
+.optionRow:last-child {
+  margin-bottom: 0;
+}
+
+.createButton {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.error {
+  background-color: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: #B91C1C;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .formLayout {
+    grid-template-columns: 1fr;
+  }
+  
+  .leftPanel {
+    order: 2;
+  }
+  
+  .rightPanel {
+    order: 1;
+  }
+}
