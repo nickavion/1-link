@@ -6,6 +6,7 @@
   "main": "src/App.jsx",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "node scripts/dev-mock.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",

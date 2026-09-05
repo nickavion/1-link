@@ -8,3 +8,18 @@
   flex: 1;
   padding: var(--spacing-lg) 0;
 }
+.mockBanner {
+  background-color: var(--color-identity-bg);
+  border-bottom: 1px solid var(--color-identity-border);
+  color: var(--color-identity);
+  font-size: 13px;
+  text-align: center;
+  padding: 6px var(--spacing-md);
+}
+
+.mockBanner code {
+  background-color: rgba(139, 92, 246, 0.18);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 12px;
+}

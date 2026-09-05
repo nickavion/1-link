@@ -22,14 +22,35 @@ schema, the event form and the dark UI this builds on.
 | Onboarding | Skippable post-signup step that writes private identity tags |
 | Event form | Three tag pickers, cover-image upload, Zod validation |
 | Browsing | The feed no longer requires an account — public events are readable by the anon key, which is what the RLS policy always said |
+| Local dev | `npm run dev:mock` runs the site against a pretend database, so a fresh clone is one command from a working page |
 
-## Quick start
+## Just want to see it?
 
 ```bash
 npm install
-cp .env.example .env      # fill in from Supabase → Project Settings → API
+npm run dev:mock
+```
+
+Open http://localhost:3000. That runs the site against a **pretend database**
+(`scripts/mock-supabase.mjs`) with a handful of example events already in it. You can
+sign up, set your tags, filter the feed and create an event. Nothing is saved — stop the
+server and it resets — and no Supabase account is needed. A banner across the top says
+so, so you can't mistake it for the real thing.
+
+Development only: the pretend database has no security rules whatsoever. Every rule this
+project cares about lives in `supabase/migrations/` and is enforced by Postgres, not by
+that script.
+
+## Running it for real
+
+```bash
+npm install
+cp .env.example .env      # then paste in your keys — see Supabase setup below
 npm run dev
 ```
+
+Start the server without keys in `.env` and you get a screen explaining both options,
+rather than a blank page.
 
 ## Supabase setup
 

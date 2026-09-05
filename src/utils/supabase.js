@@ -1,19 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 import { TAG_COLUMNS, sanitizeTags } from './tags'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Copy .env.example to .env and fill them in.'
-  )
-}
+import { isConfigured, supabaseUrl, supabaseAnonKey } from './config'
 
 // The anon key is a public credential: it ships in the bundle, and Row Level
 // Security is what decides which rows it can reach. The service_role key bypasses
 // RLS entirely and must never appear in this file or anywhere else under src/.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+//
+// With no keys configured, main.jsx renders the setup screen instead of the app, so
+// nothing below is ever called. The stand-in exists only so importing this module
+// cannot crash the page before that screen gets a chance to render.
+export const supabase = isConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : new Proxy(
+      {},
+      {
+        get() {
+          throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.')
+        }
+      }
+    )
 
 // Database table names
 export const TABLES = {
