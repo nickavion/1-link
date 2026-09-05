@@ -3,6 +3,8 @@ import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout/Layout'
 import EventsPage from './pages/EventsPage/EventsPage'
 import CreateEventPage from './pages/CreateEventPage/CreateEventPage'
+import EditEventPage from './pages/EditEventPage/EditEventPage'
+import ImportCalendarPage from './pages/ImportCalendarPage/ImportCalendarPage'
 import OnboardingPage from './pages/OnboardingPage/OnboardingPage'
 import PreferencesPage from './pages/PreferencesPage/PreferencesPage'
 import AuthCallback from './pages/AuthCallback/AuthCallback'
@@ -52,6 +54,22 @@ function App() {
                 element={
                   <RequireAuth user={user}>
                     <CreateEventPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/events/:id/edit"
+                element={
+                  <RequireAuth user={user}>
+                    <EditEventPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/import"
+                element={
+                  <RequireAuth user={user}>
+                    <ImportCalendarPage />
                   </RequireAuth>
                 }
               />

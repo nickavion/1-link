@@ -131,7 +131,7 @@ const EventsPage = () => {
       ) : (
         <div className={styles.eventsGrid}>
           {ranked.map((event) => (
-            <EventCard key={event.id} event={event} highlight={preferenceTags} />
+            <EventCard key={event.id} event={event} highlight={preferenceTags} currentUserId={user?.id} />
           ))}
         </div>
       )}

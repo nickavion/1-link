@@ -35,12 +35,17 @@ const Navigation = () => {
               Discover
             </Link>
             {isAuthenticated && (
-              <Link
-                to="/preferences"
-                className={`${styles.navLink} ${isActive('/preferences') ? styles.active : ''}`}
-              >
-                Preferences
-              </Link>
+              <>
+                <Link
+                  to="/preferences"
+                  className={`${styles.navLink} ${isActive('/preferences') ? styles.active : ''}`}
+                >
+                  Preferences
+                </Link>
+                <Link to="/import" className={`${styles.navLink} ${isActive('/import') ? styles.active : ''}`}>
+                  Import Calendar
+                </Link>
+              </>
             )}
           </div>
 

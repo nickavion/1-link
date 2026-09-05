@@ -23,6 +23,8 @@ schema, the event form and the dark UI this builds on.
 | Event form | Three tag pickers, cover-image upload, Zod validation |
 | Browsing | The feed no longer requires an account — public events are readable by the anon key, which is what the RLS policy always said |
 | Local dev | `npm run dev:mock` runs the site against a pretend database, so a fresh clone is one command from a working page |
+| Calendar import | Upload a Google Calendar `.ics` export, review and bulk-tag what it found, and only then save it — see [Importing from Google Calendar](#importing-from-google-calendar) |
+| Editing | Event owners can now edit what they created — `/events/:id/edit`, gated to the owner both in the UI and at the database |
 
 ## Just want to see it?
 
@@ -107,6 +109,7 @@ Email/password works out of the box. For Google:
 ```bash
 npm run test:rls          # needs psql and a Postgres you can create a database on
 npm run audit:secrets
+npm run test:ics          # the calendar-import parser, against a realistic fixture
 ```
 
 `test:rls` is section 4's "test this before building anything else, with two users, via
@@ -152,6 +155,54 @@ going live, or OAuth will bounce users to localhost.
 
 ---
 
+## Importing from Google Calendar
+
+Signed-in users can bring events in from a Google Calendar export at **Import Calendar**
+in the nav (`/import`). This is a **file upload**, not a "Connect Google Calendar"
+button — nothing is authenticated, no Google account access is requested, and nothing
+leaves the browser except the events the person reviewing the import chooses to save.
+
+**How to get the file**, in Google Calendar: Settings → Import & export → Export. That
+downloads a `.zip` with one `.ics` file per calendar — upload the one you want.
+
+What happens when you upload it:
+
+1. The file is parsed entirely client-side (`src/utils/icsImport.mjs`, using `ical.js`
+   and `rrule`) — nothing is sent to a server just to read it.
+2. A recurring event (an RRULE) expands into one row per occurrence, capped at 26
+   occurrences or 6 months out, whichever comes first — an unbounded "every weekday,
+   forever" meeting can't flood the review screen or the database.
+3. Cancelled instances (`STATUS:CANCELLED`) are dropped before you ever see them.
+4. **Every imported event defaults to Unlisted and has no tags**, because Google
+   Calendar has no concept of either. You pick tags and visibility once, applied to
+   everything you're bringing in, before anything is selectable — this is enforced by
+   running each row through the exact same Zod schema the create form uses
+   (`event_type_tags` non-empty and all), not a separate, looser check.
+5. An all-day event, or anything else that doesn't validate as-is, shows why and links
+   to **Fix in the full form** — which opens the normal create form prefilled with that
+   row, rather than the import screen growing a second editor.
+6. Re-uploading the same calendar won't quietly double up events already on the
+   account: a title + date match against your existing events is flagged and
+   unchecked by default (still overridable, in case that's actually intended).
+
+**Why upload-a-file and not "Connect Google Calendar":** a live OAuth sync needs a
+registered Google Cloud project, a consent-screen review for calendar scopes (real
+turnaround time, not a settings toggle), and somewhere to store refresh tokens per
+user — a meaningfully bigger and slower-to-ship project than reading a file the
+browser already has. See `git log` on this feature for the fuller tradeoff if you want
+to revisit it later.
+
+**Testing it without a real Google account:** `scripts/fixtures/sample-google-calendar.ics`
+is built to mirror exactly what Google exports — its own `VTIMEZONE` block, a
+`TZID`-qualified recurring event with an `EXDATE`, an all-day event, a cancelled one —
+and `npm run test:ics` asserts the parser against it (timezone handling included: it
+was wrong on the first pass, converting to the *test machine's* local time instead of
+preserving the calendar's own wall-clock time, which `npm run test:ics` now guards
+against). Upload that file on the import page to see the whole flow without needing a
+calendar of your own.
+
+---
+
 ## Where things live
 
 Shared modules follow upstream's layout — `src/utils/`, not the `src/lib/` the outline
@@ -163,6 +214,8 @@ src/
     tags.js         three tag groups + labels — mirrored by CHECK constraints in 0002
     validation.js   Zod schemas for the event form and preferences
     ranking.js      feed ordering — reorders, never filters
+    icsImport.mjs   parses a .ics export into rows the import page can review —
+                    framework-free on purpose, so it's testable with plain Node
     supabase.js     upstream's client and helpers, extended with tag filters,
                     attendees, preferences and cover-image upload
   hooks/
@@ -172,10 +225,19 @@ src/
     TagPicker/      multi-select chip row for one tag group
     TagPills/       an event's tags, one row and one colour per group
     FilterBar/      search + a picker per group
-    EventCard/      upstream's card, plus cover photo, tag pills and a match badge
+    EventCard/      upstream's card, plus cover photo, tag pills, a match badge
+                    and an Edit link when you're looking at your own event
+    EventForm/      the event fields form, extracted so Create and Edit share one
+                    implementation instead of two that can drift apart
   pages/
-    EventsPage/     the feed: filters, search, preference ordering
-    CreateEventPage/  upstream's form, plus tag pickers, upload and validation
+    EventsPage/           the feed: filters, search, preference ordering
+    CreateEventPage/      thin now — owns "what happens after a valid submit",
+                          EventForm owns the fields; also the landing spot for a
+                          calendar-import row the importer couldn't validate itself
+    EditEventPage/        same EventForm, prefilled from an existing row, gated to
+                          the owner in the UI and by the update policy's WITH CHECK
+    ImportCalendarPage/   upload a .ics, review, bulk-tag, import — see
+                          "Importing from Google Calendar" above
     OnboardingPage/   skippable identity-tag step
     PreferencesPage/  edit those tags later
 ```

@@ -59,6 +59,20 @@
 
 .eventVisibility {
   margin-left: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.editLink {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-accent-blue);
+  text-decoration: none;
+}
+
+.editLink:hover {
+  text-decoration: underline;
 }
 
 .badge {

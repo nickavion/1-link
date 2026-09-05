@@ -1,0 +1,18 @@
+.empty {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius-lg);
+  color: var(--color-text-secondary);
+}
+
+.empty h3 {
+  color: var(--color-text-primary);
+  font-size: 18px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.action {
+  margin-top: var(--spacing-md);
+}

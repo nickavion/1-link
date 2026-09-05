@@ -1,9 +1,10 @@
 import { format } from 'date-fns'
+import { Link } from 'react-router-dom'
 import TagPills from '../TagPills/TagPills'
 import { matchedTags } from '../../utils/ranking'
 import styles from './EventCard.module.css'
 
-const EventCard = ({ event, highlight = [] }) => {
+const EventCard = ({ event, highlight = [], currentUserId }) => {
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'EEE, d MMM')
   }
@@ -44,6 +45,11 @@ const EventCard = ({ event, highlight = [] }) => {
             <span className={`${styles.badge} ${event.is_public ? styles.public : styles.private}`}>
               {event.is_public ? 'Public' : 'Private'}
             </span>
+            {currentUserId === event.user_id && (
+              <Link to={`/events/${event.id}/edit`} className={styles.editLink}>
+                Edit
+              </Link>
+            )}
           </div>
         </div>
         

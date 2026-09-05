@@ -185,6 +185,20 @@ http
         events.push(row)
         return respond([row])
       }
+      if (req.method === 'PATCH') {
+        // supabase-js sends .update(obj) as a bare object, not an array — unlike
+        // .insert([obj]) above.
+        const updates = await body(req)
+        const idFilter = url.searchParams.get('id')
+        const targetId = idFilter?.startsWith('eq.') ? idFilter.slice(3) : null
+        const index = events.findIndex((row) => row.id === targetId)
+        if (index === -1) return respond([])
+        if (events[index].user_id !== uid) {
+          return json(res, 403, { message: 'new row violates row-level security policy' })
+        }
+        events[index] = { ...events[index], ...updates }
+        return respond([events[index]])
+      }
     }
 
     if (table === 'user_preferences') {
