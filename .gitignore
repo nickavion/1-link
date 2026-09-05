@@ -110,3 +110,10 @@ Thumbs.db
 
 # Local development
 *.local
+
+# Operator-facing setup notes — project specifics, checklists, dashboard links.
+# Deliberately not committed: the README is for anyone who finds this repo, this
+# is for whoever runs it.
+SETUP-PRIVATE.md
+NOTES-PRIVATE.md
+*.private.md

@@ -2,99 +2,90 @@
 
 Identity-aware event discovery for queer and trans communities.
 
-Events carry three separate tag groups — **who it's for**, **what it is**, **what to
+Events carry three separate tag groups — **who it's for**, **what it is**, and **what to
 expect at the door** — and a signed-in person's own identity tags reorder their feed
 without ever filtering it.
 
-Forked from [shubhamdevs/luma-clone](https://github.com/shubhamdevs/luma-clone) (MIT),
-which provides the React + Vite + Supabase foundation: auth, the events/attendees
-schema, the event form and the dark UI this builds on.
+Built on [shubhamdevs/luma-clone](https://github.com/shubhamdevs/luma-clone) (MIT),
+which provides the React + Vite + Supabase foundation.
 
 ---
 
-## What this fork adds
+## How it works
 
-| Area | Change |
-| --- | --- |
-| Schema | `cover_image_url` + three tag arrays on `events`, GIN indexes, private `user_preferences` table |
-| Security | RLS for the new table, two `WITH CHECK` gaps closed, a tag vocabulary enforced in the database, an image bucket scoped per uploader |
-| Discovery | Filter bar (chips per tag group, multi-select), search, preference-based feed ordering |
-| Onboarding | Skippable post-signup step that writes private identity tags |
-| Event form | Three tag pickers, cover-image upload, Zod validation |
-| Browsing | The feed no longer requires an account — public events are readable by the anon key, which is what the RLS policy always said |
-| Local dev | `npm run dev:mock` runs the site against a pretend database, so a fresh clone is one command from a working page |
-| Calendar import | Upload a Google Calendar `.ics` export, review and bulk-tag what it found, and only then save it — see [Importing from Google Calendar](#importing-from-google-calendar) |
-| Editing | Event owners can now edit what they created — `/events/:id/edit`, gated to the owner both in the UI and at the database |
+**Three tag groups, kept separate.** An identity tag says who an event is for, a type
+tag says what happens there, a vibe tag says what to expect at the door. Merging them
+would collapse three different filter behaviours into one.
 
-## Just want to see it?
+**Filters are OR within a group, AND across groups.** Picking *gay* and *lesbian*
+widens the results; picking *gay* and *workshop* narrows them. That's Postgres's `&&`
+(overlaps) per group, which is what the GIN indexes are for.
+
+**Preferences reorder the feed, they never filter it.** `ranking.js` scores each event
+by how many identity tags overlap the viewer's saved ones, adds a smaller nudge for
+open "all welcome" events and for matches happening this week, then sorts. Every public
+event still appears. Hard-filtering on identity would quietly hide events from the
+people most likely to want them — a friend's party, an all-welcome night — and would
+make the feed feel *narrower* the more honestly someone answered onboarding.
+
+**Onboarding is skippable, and preferences are private.** Someone who is not out should
+be able to use the site without typing their identity into a database. Those who do get
+a row that Row Level Security makes invisible to every other account, organisers
+included.
+
+## Running it locally
 
 ```bash
 npm install
 npm run dev:mock
 ```
 
-Open http://localhost:3000. That runs the site against a **pretend database**
-(`scripts/mock-supabase.mjs`) with a handful of example events already in it. You can
-sign up, set your tags, filter the feed and create an event. Nothing is saved — stop the
-server and it resets — and no Supabase account is needed. A banner across the top says
-so, so you can't mistake it for the real thing.
+Open http://localhost:3000. `dev:mock` runs the site against a pretend in-memory
+backend seeded with example events — you can sign up, set tags, filter, and create an
+event without a Supabase project. Nothing is saved; a banner says so.
 
-Development only: the pretend database has no security rules whatsoever. Every rule this
-project cares about lives in `supabase/migrations/` and is enforced by Postgres, not by
-that script.
+That mock (`scripts/mock-supabase.mjs`) is development only. It has no security rules
+whatsoever — every rule this project cares about lives in `supabase/migrations/` and is
+enforced by Postgres.
 
-## Running it for real
+To run against a real Supabase project, put its URL and anon key in `.env` and use
+`npm run dev`. Starting without them shows a setup screen rather than a blank page.
 
-```bash
-npm install
-cp .env.example .env      # then paste in your keys — see Supabase setup below
-npm run dev
-```
-
-Start the server without keys in `.env` and you get a screen explaining both options,
-rather than a blank page.
-
-## Supabase setup
-
-Create a **new** project — do not reuse an existing one. Then create the tables, using
-whichever of these two you prefer.
-
-**Option A — paste the SQL into the dashboard (no terminal, no CLI install).** In your
-Supabase project, open **SQL Editor** → New query, paste in the whole of
-[`supabase/setup-all.sql`](supabase/setup-all.sql), and hit Run. That file is every
-migration concatenated in order; it's safe to re-run, and regenerated by
-`scripts/build-setup-sql.sh` whenever the migrations change.
-
-**Option B — the CLI**, if you'd rather have migrations tracked properly for the long
-run (recommended once the project is past first setup):
+## Tests
 
 ```bash
-npm install -g supabase
-supabase login
-supabase link             # pick your project; may ask for the database password
-supabase db push          # applies supabase/migrations/* in order
+npm run test:rls      # Row Level Security, against a scratch Postgres (needs psql)
+npm run test:ics      # the calendar-import parser, against a realistic fixture
+npm run audit:secrets # no service_role keys or database passwords in tree or history
+npm run lint
 ```
 
-The anon key is a public credential: it ships in the bundle, and Row Level Security is
-what decides which rows it can reach. The `service_role` key bypasses RLS entirely and
-has no place in this app — not in `.env`, not anywhere under `src/`.
+`test:rls` applies every migration to a throwaway database and runs
+`supabase/tests/01_rls_test.sql` as a **non-owner role**, so the policies are genuinely
+enforced rather than assumed: B can't read or write A's preferences, anonymous callers
+get nothing, unlisted events stay unlisted, nobody can RSVP on someone else's behalf or
+upload into their image folder, and the tag vocabulary holds. 18 assertions, non-zero
+exit on any failure.
 
-### Migrations
+## Database
 
-`database-setup.sql` from upstream is now `supabase/migrations/0001_base_schema.sql`,
-unchanged except for `DROP POLICY IF EXISTS` lines that make `supabase db push`
-re-runnable. Everything after it is this fork:
+`supabase/migrations/` holds the schema, applied in numbered order:
 
 | File | What it does |
 | --- | --- |
+| `0001_base_schema.sql` | `events` and `attendees`, from upstream |
 | `0002_identity_tags.sql` | cover image, the three tag arrays, GIN indexes, `user_preferences`, and CHECK constraints pinning the tag vocabulary and field lengths |
 | `0003_rls_and_privacy.sql` | RLS on `user_preferences`, two inherited policy fixes, and the `going_count` trigger |
 | `0004_storage.sql` | `event-images` bucket: public read, per-uploader write folders, 5 MB, image types only |
 
+`supabase/setup-all.sql` is all four concatenated, for applying through the Supabase
+dashboard's SQL Editor in one paste. Regenerate it with `scripts/build-setup-sql.sh`
+after changing any migration.
+
 Three things there are worth knowing about:
 
 - **The tag vocabulary is a database constraint, not just a frontend constant.** A
-  hand-rolled REST call cannot invent a tag the filter UI will never render.
+  hand-rolled REST call can't invent a tag the filter UI will never render.
 - **Two inherited UPDATE policies had `USING` but no `WITH CHECK`.** `USING` decides
   which rows you may update; `WITH CHECK` decides what they may look like afterwards.
   Without it, a user could update their own event and hand ownership to someone else,
@@ -103,151 +94,38 @@ Three things there are worth knowing about:
   own, the organiser sees all — so a public `count(*)` over `attendees` is impossible
   by design. A `SECURITY DEFINER` trigger keeps the counter honest instead.
 
-### Auth
-
-Email/password works out of the box. For Google:
-
-1. **Authentication → Providers → Google** — add a client ID/secret from Google Cloud Console.
-2. **Authentication → URL Configuration** — set Site URL to the production domain (it
-   defaults to localhost) and add `<domain>/auth/callback` as a redirect URL.
-3. Replace the default SMTP with Resend/Postmark/SES before real signups — the built-in
-   sender is rate-limited hard enough to lock people out.
-
-## Before launch
-
-```bash
-npm run test:rls          # needs psql and a Postgres you can create a database on
-npm run audit:secrets
-npm run test:ics          # the calendar-import parser, against a realistic fixture
-```
-
-`test:rls` is section 4's "test this before building anything else, with two users, via
-the API and not the UI". It applies every migration to a scratch database and runs
-`supabase/tests/01_rls_test.sql` as a **non-owner role**, so RLS is genuinely enforced:
-B cannot read or write A's preferences, anonymous callers get nothing, unlisted events
-stay unlisted, nobody can RSVP on someone else's behalf or upload into their image
-folder, and the tag vocabulary holds. 18 assertions, and it exits non-zero on any
-failure.
-
-```
-PASS  B cannot read A's preferences
-PASS  B cannot write A's preferences (new row violates row-level security policy…)
-PASS  A cannot hand their event to B (WITH CHECK)
-…
-18 passed, 0 failed.
-```
-
-### Inherited credentials — read this
-
-Upstream's committed `.env.example` is not a template: it contains a real Supabase
-project ref, anon JWT, **database password** and postgres connection string. Those
-values are already public in the upstream repository, and this fork inherits them in
-commit `07679bf`. This fork's `.env.example` is placeholders only, but:
-
-- Do not reuse that Supabase project. Create your own.
-- If you fork this repo again, the history carries those values with it.
-- They are the upstream author's to rotate, not this project's.
-
-Remaining checklist items that live outside the repo: rate limiting on signup/login
-(Supabase has basic protections; Cloudflare in front if this gets traction), and
-confirming the storage bucket rejects oversized or non-image uploads in practice.
-
-## Deploy
-
-### GitHub Pages (what this repo is set up for)
-
-`.github/workflows/deploy-pages.yml` builds the site and publishes it on every push to
-the default branch. It's free, needs no domain, and the resulting URL is
-`https://<user>.github.io/1-link/`.
-
-**One-time setup:** in the repo, **Settings → Pages → Build and deployment → Source**,
-choose **GitHub Actions**. Until that's set, the workflow's deploy step fails — the
-build is fine, GitHub just refuses to publish to a Pages site that doesn't exist yet.
-After setting it, re-run the workflow from the **Actions** tab.
-
-Three things had to be true for a single-page app to work on Pages, and all three are
-handled here:
-
-- **The base path.** Pages serves a project site from `/1-link/`, not `/`, so a build
-  made for the domain root loads with no CSS or JS. `vite.config.js` switches to that
-  base only when `GITHUB_PAGES=true`, which the workflow sets — local dev and any other
-  host still build for `/`.
-- **Client-side routing.** React Router's `basename` reads Vite's `BASE_URL`, so the
-  two can't drift apart.
-- **Deep links and refreshes.** Pages has no server to hand every route back to
-  `index.html`, so `/1-link/events` in the address bar would 404. `public/404.html`
-  encodes the wanted path and bounces to the app, which restores it before React Router
-  reads the URL ([the standard fix](https://github.com/rafgraph/spa-github-pages)).
-
-Supabase config for the deployed build lives in the committed `.env.production` —
-that's the file to edit if the project's keys ever change.
-
-### Anywhere else
-
-Any static host works (`npm run build`, serve `dist/`). On Vercel:
-
-```bash
-npx vercel
-# set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the Vercel dashboard
-```
-
-Whatever the host: point Supabase's Site URL and OAuth redirect URLs at the real
-domain **before** going live, or OAuth will bounce users back to localhost.
-
----
+The Supabase anon key is a public credential by design: it ships in the browser bundle
+of any deployed build, and RLS is what protects the data. The `service_role` key
+bypasses RLS entirely and has no place in this app.
 
 ## Importing from Google Calendar
 
-Signed-in users can bring events in from a Google Calendar export at **Import Calendar**
-in the nav (`/import`). This is a **file upload**, not a "Connect Google Calendar"
-button — nothing is authenticated, no Google account access is requested, and nothing
-leaves the browser except the events the person reviewing the import chooses to save.
+Signed-in users can bring events in from a Google Calendar export at `/import`. It's a
+**file upload**, not an OAuth "connect your calendar" — no Google account access is
+requested, and nothing leaves the browser except the events the person chooses to save.
 
-**How to get the file**, in Google Calendar: Settings → Import & export → Export. That
-downloads a `.zip` with one `.ics` file per calendar — upload the one you want.
+To get the file, in Google Calendar: Settings → Import & export → Export.
 
-What happens when you upload it:
+- Parsing happens client-side (`src/utils/icsImport.mjs`, using `ical.js` and `rrule`).
+- A recurring event expands into one row per occurrence, capped at 26 occurrences or 6
+  months out, so an unbounded "every weekday forever" meeting can't flood anything.
+- Cancelled instances and `EXDATE`-excluded occurrences are dropped.
+- Wall-clock times are read from each event's declared timezone rather than converted
+  through the local machine's, so a 6:30pm event imports as 6:30pm.
+- **Everything defaults to Unlisted with no tags**, because Google Calendar has no
+  concept of either. You pick tags and visibility once, applied to what you're
+  importing, before anything becomes selectable — enforced by the same Zod schema the
+  create form uses.
+- Anything that doesn't validate (an all-day event with no time, say) links to the full
+  form, prefilled.
+- A title + date match against existing events is flagged as a possible duplicate and
+  unchecked by default, so re-uploading the same calendar doesn't double things up.
 
-1. The file is parsed entirely client-side (`src/utils/icsImport.mjs`, using `ical.js`
-   and `rrule`) — nothing is sent to a server just to read it.
-2. A recurring event (an RRULE) expands into one row per occurrence, capped at 26
-   occurrences or 6 months out, whichever comes first — an unbounded "every weekday,
-   forever" meeting can't flood the review screen or the database.
-3. Cancelled instances (`STATUS:CANCELLED`) are dropped before you ever see them.
-4. **Every imported event defaults to Unlisted and has no tags**, because Google
-   Calendar has no concept of either. You pick tags and visibility once, applied to
-   everything you're bringing in, before anything is selectable — this is enforced by
-   running each row through the exact same Zod schema the create form uses
-   (`event_type_tags` non-empty and all), not a separate, looser check.
-5. An all-day event, or anything else that doesn't validate as-is, shows why and links
-   to **Fix in the full form** — which opens the normal create form prefilled with that
-   row, rather than the import screen growing a second editor.
-6. Re-uploading the same calendar won't quietly double up events already on the
-   account: a title + date match against your existing events is flagged and
-   unchecked by default (still overridable, in case that's actually intended).
-
-**Why upload-a-file and not "Connect Google Calendar":** a live OAuth sync needs a
-registered Google Cloud project, a consent-screen review for calendar scopes (real
-turnaround time, not a settings toggle), and somewhere to store refresh tokens per
-user — a meaningfully bigger and slower-to-ship project than reading a file the
-browser already has. See `git log` on this feature for the fuller tradeoff if you want
-to revisit it later.
-
-**Testing it without a real Google account:** `scripts/fixtures/sample-google-calendar.ics`
-is built to mirror exactly what Google exports — its own `VTIMEZONE` block, a
-`TZID`-qualified recurring event with an `EXDATE`, an all-day event, a cancelled one —
-and `npm run test:ics` asserts the parser against it (timezone handling included: it
-was wrong on the first pass, converting to the *test machine's* local time instead of
-preserving the calendar's own wall-clock time, which `npm run test:ics` now guards
-against). Upload that file on the import page to see the whole flow without needing a
-calendar of your own.
-
----
+`scripts/fixtures/sample-google-calendar.ics` mirrors what Google actually exports —
+its own `VTIMEZONE` block, a `TZID`-qualified recurring event with an `EXDATE`, an
+all-day event, a cancelled one — so the flow can be exercised without a real calendar.
 
 ## Where things live
-
-Shared modules follow upstream's layout — `src/utils/`, not the `src/lib/` the outline
-sketched.
 
 ```
 src/
@@ -255,59 +133,33 @@ src/
     tags.js         three tag groups + labels — mirrored by CHECK constraints in 0002
     validation.js   Zod schemas for the event form and preferences
     ranking.js      feed ordering — reorders, never filters
-    icsImport.mjs   parses a .ics export into rows the import page can review —
-                    framework-free on purpose, so it's testable with plain Node
-    supabase.js     upstream's client and helpers, extended with tag filters,
-                    attendees, preferences and cover-image upload
+    icsImport.mjs   parses a .ics export into reviewable rows — framework-free on
+                    purpose, so it's testable with plain Node
+    supabase.js     client and helpers: tag filters, attendees, preferences, upload
   hooks/
-    useAuth.js      upstream, unchanged
+    useAuth.js         upstream, unchanged
     usePreferences.js  the signed-in user's private identity tags
   components/
     TagPicker/      multi-select chip row for one tag group
     TagPills/       an event's tags, one row and one colour per group
     FilterBar/      search + a picker per group
-    EventCard/      upstream's card, plus cover photo, tag pills, a match badge
-                    and an Edit link when you're looking at your own event
-    EventForm/      the event fields form, extracted so Create and Edit share one
-                    implementation instead of two that can drift apart
+    EventCard/      cover photo, tag pills, match badge, owner-only Edit link
+    EventForm/      the event fields form, shared by Create and Edit so the two
+                    can't drift apart
   pages/
     EventsPage/           the feed: filters, search, preference ordering
-    CreateEventPage/      thin now — owns "what happens after a valid submit",
-                          EventForm owns the fields; also the landing spot for a
-                          calendar-import row the importer couldn't validate itself
-    EditEventPage/        same EventForm, prefilled from an existing row, gated to
-                          the owner in the UI and by the update policy's WITH CHECK
-    ImportCalendarPage/   upload a .ics, review, bulk-tag, import — see
-                          "Importing from Google Calendar" above
-    OnboardingPage/   skippable identity-tag step
-    PreferencesPage/  edit those tags later
+    CreateEventPage/      owns what happens after a valid submit; EventForm owns
+                          the fields
+    EditEventPage/        same form, prefilled, owner-gated in UI and by RLS
+    ImportCalendarPage/   upload a .ics, review, bulk-tag, import
+    OnboardingPage/       skippable identity-tag step
+    PreferencesPage/      edit those tags later
 ```
-
-### The two decisions worth defending
-
-**Preferences reorder, they never filter.** `ranking.js` scores each event by how many
-identity tags overlap the viewer's saved ones, adds a smaller nudge for open
-"all welcome" events and for matches happening this week, then sorts. Every public
-event still appears. Hard-filtering on identity would quietly hide events from the
-people most likely to want them — a friend's party, an all-welcome night — and would
-make the feed feel *narrower* the more honestly someone answered onboarding.
-
-**Onboarding is skippable, and preferences are unreadable by anyone else.** Someone who
-is not out should be able to use the site without typing their identity into a
-database. Those who do get a row that RLS makes invisible to every other account,
-organisers included — `npm run test:rls` is what proves it, and it is worth re-running
-after any policy change.
-
-### Filter semantics
-
-OR within a tag group, AND across groups: picking *gay* and *lesbian* widens the
-results, picking *gay* and *workshop* narrows them. That is Postgres's `&&` (overlaps)
-per group, which is what the GIN indexes in `0002` are for.
 
 ## Not built yet
 
-Per section 10 of the outline: organiser verification badges, a moderation queue for
-public submissions, and an Expo app sharing this backend — all deliberately deferred.
+Organiser verification badges, a moderation queue for public submissions, and a mobile
+app sharing this backend.
 
 ## Licence
 
