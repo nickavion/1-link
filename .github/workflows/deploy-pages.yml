@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+# Runs on every push to this branch (the repo's default branch), and can also be
+# triggered manually from the Actions tab — useful the first time, to deploy
+# without needing to push a new commit.
+on:
+  push:
+    branches: [claude/website-from-markdown-8knhuq]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; a second push while one is running cancels the
+# in-progress one rather than queuing behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # GITHUB_PAGES=true switches vite.config.js to the /1-link/ base path Pages
+      # needs. The Supabase URL and anon key come from the committed
+      # .env.production — see that file for why committing it is fine.
+      - run: npm run build
+        env:
+          GITHUB_PAGES: 'true'
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

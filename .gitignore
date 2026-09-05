@@ -75,7 +75,10 @@ dist
 
 # Gatsby files
 .cache/
-public
+# NOTE: upstream's boilerplate ignored `public` here, which is right for Gatsby
+# (where it's build output) and wrong for Vite (where it's committed source that
+# gets copied into dist/ verbatim). It was silently keeping public/404.html — the
+# file that makes deep links work on GitHub Pages — out of the repo.
 
 # Storybook build outputs
 .out

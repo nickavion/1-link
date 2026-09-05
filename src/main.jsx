@@ -9,7 +9,9 @@ import './styles/globals.css'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {isConfigured ? (
-      <BrowserRouter>
+      // basename matches vite.config.js's `base` — Vite exposes whatever that's set
+      // to as BASE_URL, so the two can never drift out of sync with each other.
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <App />
       </BrowserRouter>
     ) : (

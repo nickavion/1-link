@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Overlap</title>
+    <script type="text/javascript">
+      // GitHub Pages has no server, so it has no way to hand every route to the
+      // same index.html the way a real server would for a single-page app — a
+      // direct link or a page refresh on anything but the exact home path lands
+      // here instead. This encodes the path the visitor actually wanted into a
+      // query string and bounces to the real app, which decodes it back before
+      // React Router ever looks at the URL (see the matching script in
+      // index.html). Standard, well-known fix, not a hack — see
+      // https://github.com/rafgraph/spa-github-pages
+      var pathSegmentsToKeep = 1 // the /1-link repo-name segment
+
+      var l = window.location
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      )
+    </script>
+  </head>
+  <body></body>
+</html>

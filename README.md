@@ -56,13 +56,28 @@ rather than a blank page.
 
 ## Supabase setup
 
-Create a **new** project — do not reuse an existing one.
+Create a **new** project — do not reuse an existing one. Then create the tables, using
+whichever of these two you prefer.
+
+**Option A — paste the SQL into the dashboard (no terminal, no CLI install).** In your
+Supabase project, open **SQL Editor** → New query, then paste in the contents of each
+file from `supabase/migrations/` **in numbered order**, clicking Run after each:
+
+1. `0001_base_schema.sql`
+2. `0002_identity_tags.sql`
+3. `0003_rls_and_privacy.sql`
+4. `0004_storage.sql`
+
+Order matters — later files alter tables and policies the earlier ones create. Each
+should report success; if one errors, stop and fix it before running the next.
+
+**Option B — the CLI**, if you'd rather have migrations tracked properly for the long
+run (recommended once the project is past first setup):
 
 ```bash
 npm install -g supabase
 supabase login
-supabase projects create overlap
-supabase link
+supabase link             # pick your project; may ask for the database password
 supabase db push          # applies supabase/migrations/* in order
 ```
 
@@ -145,13 +160,45 @@ confirming the storage bucket rejects oversized or non-image uploads in practice
 
 ## Deploy
 
+### GitHub Pages (what this repo is set up for)
+
+`.github/workflows/deploy-pages.yml` builds the site and publishes it on every push to
+the default branch. It's free, needs no domain, and the resulting URL is
+`https://<user>.github.io/1-link/`.
+
+**One-time setup:** in the repo, **Settings → Pages → Build and deployment → Source**,
+choose **GitHub Actions**. Until that's set, the workflow's deploy step fails — the
+build is fine, GitHub just refuses to publish to a Pages site that doesn't exist yet.
+After setting it, re-run the workflow from the **Actions** tab.
+
+Three things had to be true for a single-page app to work on Pages, and all three are
+handled here:
+
+- **The base path.** Pages serves a project site from `/1-link/`, not `/`, so a build
+  made for the domain root loads with no CSS or JS. `vite.config.js` switches to that
+  base only when `GITHUB_PAGES=true`, which the workflow sets — local dev and any other
+  host still build for `/`.
+- **Client-side routing.** React Router's `basename` reads Vite's `BASE_URL`, so the
+  two can't drift apart.
+- **Deep links and refreshes.** Pages has no server to hand every route back to
+  `index.html`, so `/1-link/events` in the address bar would 404. `public/404.html`
+  encodes the wanted path and bounces to the app, which restores it before React Router
+  reads the URL ([the standard fix](https://github.com/rafgraph/spa-github-pages)).
+
+Supabase config for the deployed build lives in the committed `.env.production` —
+that's the file to edit if the project's keys ever change.
+
+### Anywhere else
+
+Any static host works (`npm run build`, serve `dist/`). On Vercel:
+
 ```bash
 npx vercel
 # set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the Vercel dashboard
 ```
 
-Point Supabase's Site URL and OAuth redirect URLs at the production domain **before**
-going live, or OAuth will bounce users to localhost.
+Whatever the host: point Supabase's Site URL and OAuth redirect URLs at the real
+domain **before** going live, or OAuth will bounce users back to localhost.
 
 ---
 
