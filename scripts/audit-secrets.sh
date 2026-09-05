@@ -41,10 +41,11 @@ fi
 echo "Scanning history (inherited upstream commits included)…"
 HITS="$(git log -p --all -- .env.example | grep -c 'SUPABASE_DB_PASSWORD' || true)"
 if [ "$HITS" -ne 0 ]; then
-  echo "  NOTE: the inherited luma-clone history contains the upstream author's own"
-  echo "  Supabase credentials in .env.example. They are already public in the"
-  echo "  upstream repo and are not this project's to rotate — but do not reuse that"
-  echo "  project, and treat any fork of this history as carrying them."
+  echo "  A database password or connection string appears in .env.example somewhere"
+  echo "  in history. History was scrubbed of the credentials inherited from"
+  echo "  luma-clone, so this means new ones got committed — rotate them, then"
+  echo "  rewrite history to remove them before this repo is made public."
+  status=1
 fi
 
 exit "$status"
