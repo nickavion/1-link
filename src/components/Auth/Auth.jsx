@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { auth } from '../../utils/supabase'
 import styles from './Auth.module.css'
 
 const Auth = () => {
+  const navigate = useNavigate()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,14 +17,17 @@ const Auth = () => {
     setError('')
 
     try {
-      const { error } = isSignUp 
+      const { data, error } = isSignUp 
         ? await auth.signUp(email, password)
         : await auth.signIn(email, password)
 
       if (error) {
         setError(error.message)
-      } else if (isSignUp) {
+      } else if (isSignUp && !data?.session) {
+        // Email confirmation is on: there is no session yet, so onboarding waits.
         setError('Check your email for the confirmation link!')
+      } else if (isSignUp) {
+        navigate('/onboarding')
       }
     } catch (err) {
       setError('An unexpected error occurred')
@@ -51,10 +56,12 @@ const Auth = () => {
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
         <h1 className={styles.title}>
-          {isSignUp ? 'Create Account' : 'Welcome Back'}
+          {isSignUp ? 'Join Overlap' : 'Welcome Back'}
         </h1>
         <p className={styles.subtitle}>
-          {isSignUp ? 'Join Luma to create amazing events' : 'Sign in to your account'}
+          {isSignUp
+            ? 'Next you can pick your identity tags — private, optional, and changeable any time.'
+            : 'Sign in to RSVP, host events and keep your feed tuned.'}
         </p>
 
         <form onSubmit={handleSubmit} className={styles.form}>

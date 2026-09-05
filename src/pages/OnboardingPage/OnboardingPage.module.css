@@ -1,0 +1,52 @@
+.onboarding {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) 0;
+}
+
+.steps {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.step {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background-color: var(--color-border);
+}
+
+.done {
+  background-color: var(--color-accent-green);
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.lead {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.privacy {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  margin-top: var(--spacing-lg);
+}
+
+.error {
+  color: #F87171;
+  font-size: 14px;
+  margin-top: var(--spacing-sm);
+}

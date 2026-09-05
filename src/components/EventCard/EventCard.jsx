@@ -1,7 +1,9 @@
 import { format } from 'date-fns'
+import TagPills from '../TagPills/TagPills'
+import { matchedTags } from '../../utils/ranking'
 import styles from './EventCard.module.css'
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, highlight = [] }) => {
   const formatDate = (dateString) => {
     return format(new Date(dateString), 'EEE, d MMM')
   }
@@ -10,12 +12,29 @@ const EventCard = ({ event }) => {
     return format(new Date(dateString), 'h:mm a')
   }
 
+  const matches = matchedTags(event, highlight)
+
   return (
     <div className={styles.eventCard}>
       <div className={styles.eventImage}>
-        <div className={styles.eventCover}>
-          <div className={styles.geometricPattern}></div>
-        </div>
+        {event.cover_image_url ? (
+          <img
+            src={event.cover_image_url}
+            alt=""
+            className={styles.coverPhoto}
+            loading="lazy"
+          />
+        ) : (
+          <div className={styles.eventCover}>
+            <div className={styles.geometricPattern}></div>
+          </div>
+        )}
+
+        {matches.length > 0 && (
+          <span className={styles.matchBadge}>
+            {matches.length === 1 ? 'Matches your tags' : `${matches.length} tag matches`}
+          </span>
+        )}
       </div>
       
       <div className={styles.eventContent}>
@@ -56,6 +75,10 @@ const EventCard = ({ event }) => {
             <p>{event.description}</p>
           </div>
         )}
+
+        <div className={styles.eventTags}>
+          <TagPills event={event} highlight={highlight} />
+        </div>
         
         <div className={styles.eventMeta}>
           <div className={styles.eventOptions}>
@@ -65,6 +88,9 @@ const EventCard = ({ event }) => {
             <span className={styles.metaItem}>
               {event.capacity || 'Unlimited'} capacity
             </span>
+            {event.going_count > 0 && (
+              <span className={styles.metaItem}>{event.going_count} going</span>
+            )}
             {event.requires_approval && (
               <span className={styles.metaItem}>Requires approval</span>
             )}

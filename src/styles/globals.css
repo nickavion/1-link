@@ -9,6 +9,18 @@
   --color-text-secondary: #9CA3AF;
   --color-border: #374151;
   --color-hover: #374151;
+
+  /* Tag group tones. Identity, type and vibe tags never share a colour, so the
+     three groups stay legible at a glance instead of blurring into one row. */
+  --color-identity: #C4B5FD;
+  --color-identity-bg: rgba(139, 92, 246, 0.18);
+  --color-identity-border: rgba(139, 92, 246, 0.45);
+  --color-type: #6EE7B7;
+  --color-type-bg: rgba(16, 185, 129, 0.16);
+  --color-type-border: rgba(16, 185, 129, 0.42);
+  --color-vibe: #FCD34D;
+  --color-vibe-bg: rgba(245, 158, 11, 0.14);
+  --color-vibe-border: rgba(245, 158, 11, 0.4);
   
   --border-radius: 8px;
   --border-radius-lg: 12px;

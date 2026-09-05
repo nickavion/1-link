@@ -17,7 +17,7 @@ const AuthCallback = () => {
         }
 
         if (data.session) {
-          navigate('/')
+          navigate('/events')
         } else {
           navigate('/auth')
         }

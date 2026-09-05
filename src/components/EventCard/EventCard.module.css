@@ -131,3 +131,30 @@
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--border-radius);
 }
+.coverPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.matchBadge {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-identity);
+  background-color: rgba(31, 29, 43, 0.82);
+  border: 1px solid var(--color-identity-border);
+  backdrop-filter: blur(4px);
+}
+
+.eventTags {
+  margin-bottom: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}

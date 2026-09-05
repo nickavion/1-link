@@ -1,0 +1,53 @@
+.pillGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.identity {
+  color: var(--color-identity);
+  background-color: var(--color-identity-bg);
+  border-color: var(--color-identity-border);
+}
+
+.type {
+  color: var(--color-type);
+  background-color: var(--color-type-bg);
+  border-color: var(--color-type-border);
+}
+
+.vibe {
+  color: var(--color-vibe);
+  background-color: var(--color-vibe-bg);
+  border-color: var(--color-vibe-border);
+}
+
+.matched {
+  font-weight: 600;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
